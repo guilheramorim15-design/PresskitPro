@@ -772,6 +772,7 @@ function submitForm() {
   document.getElementById('form-main').style.display = 'none';
   document.querySelector('.progress-track').style.display = 'none';
   document.getElementById('screen-success').classList.add('active');
+  
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   // Log to console (para ver os dados durante testes)
@@ -782,19 +783,48 @@ function submitForm() {
 // ============================================================
 // RESET
 // ============================================================
-function resetForm() {
-  document.querySelectorAll('input, textarea, select').forEach(el => {
-    if (el.type !== 'submit') el.value = '';
+// ============================================================
+// SUBMIT - CONECTADO AO GOOGLE SHEETS
+// ============================================================
+function submitForm() {
+  const d = collectAll();
+  
+  // Link que você gerou no Apps Script
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwldKa7c7MlysREQ3gasMFZigp_jhuKIJ9tehiO2xwe4yhfUii8h7wvz0T4P9uHuQu75/exec";
+
+  if (!d.nomeArtistico || !d.email) {
+    alert('Preencha pelo menos o nome artístico e o e-mail antes de enviar.');
+    goTo(1); 
+    return;
+  }
+
+  // Muda o texto do botão para indicar que está enviando
+  const btn = document.querySelector('.btn-submit');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = "✦ Enviando...";
+
+  // Envia para o Google Apps Script
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors', // Necessário para evitar erro de CORS com Apps Script
+    cache: 'no-cache',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(d)
+  })
+  .then(() => {
+    // Show success
+    document.getElementById('suc-nome').textContent = d.nomeArtistico;
+    document.getElementById('suc-email').textContent = d.email;
+    document.getElementById('form-main').style.display = 'none';
+    document.querySelector('.progress-track').style.display = 'none';
+    document.getElementById('screen-success').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  })
+  .catch(err => {
+    console.error('Erro!', err.message);
+    alert("Ocorreu um erro ao enviar. Tente novamente.");
+    btn.disabled = false;
+    btn.innerHTML = originalText;
   });
-  selectedStyle = 'Dark Club';
-  document.querySelectorAll('.scard').forEach((c,i) => {
-    c.classList.remove('sel'); if(i===0) c.classList.add('sel');
-  });
-  document.getElementById('form-main').style.display = '';
-  document.querySelector('.progress-track').style.display = '';
-  document.getElementById('screen-success').classList.remove('active');
-  goTo(1);
 }
-</script>
-</body>
-</html>
