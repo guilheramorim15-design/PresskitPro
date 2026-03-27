@@ -244,8 +244,24 @@ function submitForm() {
   const btn = document.querySelector('.btn-submit');
   btn.disabled = true; btn.innerText = "Enviando...";
 
+  // Trecho final corrigido:
   fetch(SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
     cache: 'no-cache',
-    headers: { 'Content-Type': 'application/json
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(d)
+  }).then(() => {
+    document.getElementById('form-main').style.display = 'none';
+    document.querySelector('.progress-track').style.display = 'none';
+    document.getElementById('screen-success').classList.add('active');
+    document.getElementById('suc-nome').innerText = "Sucesso, " + d.nomeArtistico + "!";
+    document.getElementById('suc-email').innerText = "Dados enviados para " + d.email;
+  }).catch(() => {
+    alert("Erro ao enviar. Verifique sua conexão.");
+    btn.disabled = false; btn.innerText = "✦ Enviar";
+  });
+}
+</script>
+</body>
+</html>
