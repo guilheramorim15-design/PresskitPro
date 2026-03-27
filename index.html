@@ -644,11 +644,12 @@ function updateProgress() {
   document.getElementById('step-counter').textContent = `Passo ${currentStep} de ${totalSteps}`;
   for (let i = 1; i <= totalSteps; i++) {
     const el = document.getElementById('pt' + i);
+    if (!el) continue;
     el.classList.remove('active', 'done');
     const num = el.querySelector('.pstep-num');
-    if (i < currentStep) { el.classList.add('done'); num.textContent = '✓'; }
-    else if (i === currentStep) { el.classList.add('active'); num.textContent = String(i); }
-    else num.textContent = String(i);
+    if (i < currentStep) { el.classList.add('done'); if(num) num.textContent = '✓'; }
+    else if (i === currentStep) { el.classList.add('active'); if(num) num.textContent = String(i); }
+    else { if(num) num.textContent = String(i); }
   }
 }
 
@@ -678,7 +679,6 @@ function addRef() {
 function collectAll() {
   const refs = [...document.querySelectorAll('#ref-list input')].map(i => i.value).filter(Boolean);
   return {
-    // Identidade
     nome: v('f-nome'),
     nomeArtistico: v('f-nomeArtistico'),
     local: v('f-local'),
@@ -686,13 +686,11 @@ function collectAll() {
     bio: v('f-bio'),
     conquistas: v('f-conquistas'),
     inicio: v('f-inicio'),
-    // Contato
     whatsapp: v('f-whatsapp'),
     email: v('f-email'),
     presskit: v('f-presskit'),
     fotos: v('f-fotos'),
     videos: v('f-videos'),
-    // Redes
     instagram: v('s-instagram'),
     tiktok: v('s-tiktok'),
     facebook: v('s-facebook'),
@@ -703,12 +701,10 @@ function collectAll() {
     apple: v('s-apple'),
     beatport: v('s-beatport'),
     outra: v('s-outra'),
-    // Visual
     estiloVisual: selectedStyle,
     descVisual: v('f-descVisual'),
     referencias: refs,
     outrosLinks: v('f-outrosLinks'),
-    // Meta
     enviadoEm: new Date().toLocaleString('pt-BR')
   };
 }
@@ -756,28 +752,39 @@ function buildReview() {
 // ============================================================
 function submitForm() {
   const d = collectAll();
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwldKa7c7MlysREQ3gasMFZigp_jhuKIJ9tehiO2xwe4yhfUii8h7wvz0T4P9uHuQu75/exec";
+
   if (!d.nomeArtistico || !d.email) {
     alert('Preencha pelo menos o nome artístico e o e-mail antes de enviar.');
     goTo(1); return;
   }
 
-  // Save to localStorage as backup
-  const saved = JSON.parse(localStorage.getItem('presskit_submissions') || '[]');
-  saved.push(d);
-  localStorage.setItem('presskit_submissions', JSON.stringify(saved));
+  const btn = document.querySelector('.btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = "✦ Enviando...";
 
-  // Show success
-  document.getElementById('suc-nome').textContent = d.nomeArtistico;
-  document.getElementById('suc-email').textContent = d.email;
-  document.getElementById('form-main').style.display = 'none';
-  document.querySelector('.progress-track').style.display = 'none';
-  document.getElementById('screen-success').classList.add('active');
-  
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify(d)
+  })
+  .then(() => {
+    document.getElementById('suc-nome').textContent = d.nomeArtistico;
+    document.getElementById('suc-email').textContent = d.email;
+    document.getElementById('form-main').style.display = 'none';
+    document.querySelector('.progress-track').style.display = 'none';
+    document.getElementById('screen-success').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  })
+  .catch(err => {
+    alert("Erro ao enviar. Tente novamente.");
+    btn.disabled = false;
+    btn.innerHTML = "✦ Enviar informações";
+  });
+}
 
-  // Log to console (para ver os dados durante testes)
-  console.log('=== PRESSKIT SUBMISSION ===');
-  console.log(JSON.stringify(d, null, 2));
+function resetForm() {
+  location.reload();
 }
 
 // ============================================================
